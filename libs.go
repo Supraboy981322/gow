@@ -19,7 +19,7 @@ func (w Writer) l(a ...interface{}) {
 	fmt.Fprintln(os.Stdout, a...)
 }
 
-fnt (wr Writer) lf(a ...interface{}) {
+func (wr Writer) lf(a ...interface{}) {
 	fmt.Println(fmt.Sprintf(a...))
 }
 

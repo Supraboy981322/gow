@@ -91,6 +91,9 @@ func main() {
 func readArgChars(arg []string, cur int) bool { 
 	strRemaining := false
 	for i := 0; i < len(arg); i++ {
+		if strRemaining {
+			break
+		}
 		switch (arg[i]) {
 		case "-":
 			strRemaining = true

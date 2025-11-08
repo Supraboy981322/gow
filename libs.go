@@ -65,7 +65,7 @@ func (er Eror) han(err error, str string) {
 	}
 }
 
-func (er Eror) fhan(err error, str string) {
+func (er Eror) fan(err error, str string) {
 	if err != nil {
 		er.han(err, str)
 		os.Exit(1)

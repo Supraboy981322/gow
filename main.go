@@ -18,13 +18,20 @@ var (
 	silent = false
 	url string
 	invalidArg InvalidArg
+
+	helpStr = []string{
+		"\033[38mGOw\033[0m --> \033[33mhelp\033[0m",
+		"  \033[32m-h\033[0m",
+		"    help (responds with this)",
+		"  \033[35m-s\033[0m",
+		"    silent (outputs only response body",
+	}
 )
 
 func main() {
 	strRemaining := false
 	for i := 0; i < len(args); i++ {
 		curArg := args[i]
-		wr.l(curArg)
 		if !strRemaining {
 			switch curArg[0] {
 			case '-':
@@ -51,6 +58,8 @@ func readArgChars(arg []string) bool {
 			break
 		case "s":
 			silent = true
+		case "h":
+			help()
 		default:
 			invalidArg.Value = i
 			invalidArg.Exists = true

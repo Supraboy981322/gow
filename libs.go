@@ -44,3 +44,10 @@ func (w Writer) err(a ...interface{}) {
 func (w Writer) errl(a ...interface{}) {
 	fmt.Fprintln(os.Stderr, a...)
 }
+
+func help() {
+	for i := 0; i < len(helpStr); i++ {
+		wr.l(helpStr[i])
+	}
+	os.Exit(0)
+}

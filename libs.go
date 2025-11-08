@@ -8,13 +8,15 @@ import (
 
 type (
 	Writer struct{}
+	Eror struct{}
 )
 var (
 	wr = Writer{}
+	er = Eror{}
 )
 
 func (w Writer) l(a ...interface{}) {
-	fmt.Println(a...)
+	fmt.Fprintln(os.Stdout, a...)
 }
 
 func (w Writer) i(a ...interface{}) {
@@ -54,4 +56,18 @@ func (w Writer) help() {
 		wr.l(helpStr[i])
 	}
 	os.Exit(0)
+}
+
+func (er Eror) han(err error, str string) {
+	if err != nil {
+		wr.errl(str)
+		wr.errl(err)
+	}
+}
+
+func (er Eror) fhan(err error, str string) {
+	if err != nil {
+		er.han(err, str)
+		os.Exit(1)
+	}
 }

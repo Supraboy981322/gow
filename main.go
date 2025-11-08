@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"strings"
-//	"net/http"
+	"net/http"
 )
 
 type (
@@ -21,11 +21,11 @@ var (
 	help bool
 
 	helpStr = []string{
-		"\033[38mGOw\033[0m --> \033[33mhelp\033[0m",
-		"  \033[32m-h\033[0m",
+		"\033[1;36mGOw\033[0m \033[1m-->\033[0m \033[1;33mhelp\033[0m",
+		"  \033[1;32m-h\033[0m",
 		"    help (responds with this)",
-		"  \033[35m-s\033[0m",
-		"    silent (outputs only response body",
+		"  \033[1;35m-s\033[0m",
+		"    silent (outputs only response body)",
 	}
 )
 
@@ -42,7 +42,6 @@ func main() {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
 				if help {
-					wr.i("\033[0m")
 					wr.help()
 				}
 			default:
@@ -52,6 +51,11 @@ func main() {
 			url += curArg
 		}
 	}
+ 
+	res, err := mkReq();
+	er.fhan(err, "err making request")
+
+	wr.l(res)
 }
 
 func readArgChars(arg []string) bool { 
@@ -73,6 +77,10 @@ func readArgChars(arg []string) bool {
 		}
 	}
 	return strRemaining
+}
+
+func mkReq() (string, error){
+
 }
 
 func errOut(err error, str any, ext ...interface{}) {

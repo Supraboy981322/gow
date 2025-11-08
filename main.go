@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"time"
+	"io/ioutil"
 	"strings"
 	"net/http"
 )
@@ -16,9 +18,12 @@ type (
 var (
 	args = os.Args[1:]
 	silent bool
+	secure bool
 	url string
 	invalidArg InvalidArg
 	help bool
+	headKeys []string
+	headVals []string
 
 	helpStr = []string{
 		"\033[1;36mGOw\033[0m \033[1m-->\033[0m \033[1;33mhelp\033[0m",
@@ -37,7 +42,7 @@ func main() {
 			switch curArg[0] {
 			case '-':
 				strSplit := strings.Split(curArg, "")
-				strRemaining = readArgChars(strSplit)
+				strRemaining = readArgChars(strSplit, i)
 				if invalidArg.Exists {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
@@ -52,13 +57,26 @@ func main() {
 		}
 	}
  
-	res, err := mkReq();
-	er.fhan(err, "err making request")
+	if len(args) == 0 {
+		wr.errl("not enough args")
+		os.Exit(1)
+	}
+
+	if url == "" {
+		wr.errl("no url provided")
+		os.Exit(1)
+	} 
+
+	res, status, code, err := mkReq()
+	if !silent {
+		wr.lf("status:  %s / %d", status, code)
+	}
+	er.fan(err, res)
 
 	wr.l(res)
 }
 
-func readArgChars(arg []string) bool { 
+func readArgChars(arg []string, cur int) bool { 
 	strRemaining := false
 	for i := 0; i < len(arg); i++ {
 		switch (arg[i]) {
@@ -67,8 +85,13 @@ func readArgChars(arg []string) bool {
 			break
 		case "s":
 			silent = true
+		case "S":
+			secure = true
 		case "h":
 			help = true
+		case "H":
+			headKeys[len(headKeys)] = args[cur+1]
+			headVals[len(headVals)] = args[cur+2]
 		default:
 			invalidArg.Value = i
 			invalidArg.Exists = true
@@ -79,8 +102,48 @@ func readArgChars(arg []string) bool {
 	return strRemaining
 }
 
-func mkReq() (string, error){
+func mkReq() (string, string, int, error){
+	wr.l(url)
+	urlSplit := strings.Split("://", url)
+	if len(urlSplit) == 1 {
+		urlSplit = append(urlSplit, url)
+		reqType, ok := op.tern(secure, "https", "http").(string)
+		if !ok {
+			return "converting type of any to " +
+						 "string for setting request type",
+							"" , 0, er.mk("")
+		}
+		urlSplit[0] = reqType
+	}
 
+	url = urlSplit[0] + "://" + urlSplit[1]
+
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	wr.l(url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	return "err creating request", "", 0, err
+
+	req.Header.Add("User-Agent", "someCrappyCliTool")
+	for i := 0; i < len(headKeys); i++ {
+		req.Header.Add(headKeys[i], headVals[i])
+	}
+
+	resp, err := client.Do(req)
+	stat := resp.StatusCode
+	statTxt := http.StatusText(stat)
+	return "err doing request", statTxt, stat, err
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	return "err reading body", statTxt, stat, err
+
+
+	return string(body), statTxt, stat, nil
 }
 
 func errOut(err error, str any, ext ...interface{}) {

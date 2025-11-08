@@ -9,18 +9,20 @@ import (
 type (
 	Writer struct{}
 	Eror struct{}
+	Misc struct{}
 )
 var (
 	wr = Writer{}
 	er = Eror{}
+	op = Misc{}
 )
 
 func (w Writer) l(a ...interface{}) {
 	fmt.Fprintln(os.Stdout, a...)
 }
 
-func (wr Writer) lf(a ...interface{}) {
-	fmt.Println(fmt.Sprintf(a...))
+func (wr Writer) lf(str string, a ...interface{}) {
+	fmt.Println(fmt.Sprintf(str, a...))
 }
 
 func (w Writer) i(a ...interface{}) {
@@ -73,5 +75,31 @@ func (er Eror) fan(err error, str string) {
 	if err != nil {
 		er.han(err, str)
 		os.Exit(1)
+	}
+}
+
+func (er Eror) mk(str string) error {
+	return errors.New(str)
+}
+
+func (er Eror) ok(ok bool, str string) {
+	if !ok {
+		err := er.mk(str)
+		wr.errl(err)
+	}
+}
+
+func (er Eror) okMkErr(ok bool, str string) error {
+	if !ok {
+		return er.mk(str)
+	}
+	return nil
+}
+
+func (op Misc) tern(con1 bool, val1 any, val2 any) interface{} {
+	if con1 {
+		return val1
+	} else {
+		return val2
 	}
 }

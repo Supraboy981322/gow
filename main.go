@@ -5,6 +5,7 @@ import (
 	"time"
 	"io/ioutil"
 	"strings"
+	"slices"
 	"net/http"
 )
 
@@ -24,6 +25,7 @@ var (
 	help bool
 	headKeys []string
 	headVals []string
+	parsedArgs []int
 
 	helpStr = []string{
 		"\033[1;36mGOw\033[0m \033[1m-->\033[0m \033[1;33mhelp\033[0m",
@@ -31,6 +33,12 @@ var (
 		"    help (responds with this)",
 		"  \033[1;35m-s\033[0m",
 		"    silent (outputs only response body)",
+		"  \033[1;33m-S\033[0m",
+		"    secure (https only)",
+		"  \033[1;34m-H\033[0m",
+		"    header",
+		"      usage:  \033[1;34m-H \"[key]\" \"[value]\"\033[0m",
+		"      eg:  \033[1;37mgow \033[1;34m-H \"Content-Type\" \"text/json\" \033[1;37mhttps://example.com\033[0m",
 	}
 )
 
@@ -38,11 +46,14 @@ func main() {
 	strRemaining := false
 	for i := 0; i < len(args); i++ {
 		curArg := args[i]
-		if !strRemaining {
+		wr.l(parsedArgs)
+		parsed := slices.Contains(parsedArgs, i)
+		if !strRemaining && !parsed {
 			switch curArg[0] {
 			case '-':
-				strSplit := strings.Split(curArg, "")
+				strSplit := strings.Split(curArg, "")[1:]
 				strRemaining = readArgChars(strSplit, i)
+				strRemaining = false
 				if invalidArg.Exists {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
@@ -52,8 +63,8 @@ func main() {
 			default:
 				url = curArg
 			}
-		} else {
-			url += curArg
+		} else if !parsed {
+			url += "%20" + curArg
 		}
 	}
  
@@ -69,6 +80,7 @@ func main() {
 
 	res, status, code, err := mkReq()
 	if !silent {
+		wr.l(url)
 		wr.lf("status:  %s / %d", status, code)
 	}
 	er.fan(err, res)
@@ -90,8 +102,9 @@ func readArgChars(arg []string, cur int) bool {
 		case "h":
 			help = true
 		case "H":
-			headKeys[len(headKeys)] = args[cur+1]
-			headVals[len(headVals)] = args[cur+2]
+			headKeys = append(headKeys, args[cur+1])
+			headVals = append(headVals, args[cur+2])
+			parsedArgs = append(parsedArgs, cur, cur+1, cur+2)
 		default:
 			invalidArg.Value = i
 			invalidArg.Exists = true
@@ -103,7 +116,6 @@ func readArgChars(arg []string, cur int) bool {
 }
 
 func mkReq() (string, string, int, error){
-	wr.l(url)
 	urlSplit := strings.Split("://", url)
 	if len(urlSplit) == 1 {
 		urlSplit = append(urlSplit, url)
@@ -122,8 +134,6 @@ func mkReq() (string, string, int, error){
 		Timeout: time.Second * 10,
 	}
 
-	wr.l(url)
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "err creating request", "", 0, err
@@ -135,11 +145,12 @@ func mkReq() (string, string, int, error){
 	}
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return "err doing request", "client failed", 0, err
+	}
+
 	stat := resp.StatusCode
 	statTxt := http.StatusText(stat)
-	if err != nil {
-		return "err doing request", statTxt, stat, err
-	}
 
 	defer resp.Body.Close()
 
@@ -147,7 +158,6 @@ func mkReq() (string, string, int, error){
 	if err != nil {
 		return "err reading body", statTxt, stat, err
 	}
-
 
 	return string(body), statTxt, stat, nil
 }

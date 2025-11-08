@@ -125,7 +125,9 @@ func mkReq() (string, string, int, error){
 	wr.l(url)
 
 	req, err := http.NewRequest("GET", url, nil)
-	return "err creating request", "", 0, err
+	if err != nil {
+		return "err creating request", "", 0, err
+	}
 
 	req.Header.Add("User-Agent", "someCrappyCliTool")
 	for i := 0; i < len(headKeys); i++ {
@@ -135,12 +137,16 @@ func mkReq() (string, string, int, error){
 	resp, err := client.Do(req)
 	stat := resp.StatusCode
 	statTxt := http.StatusText(stat)
-	return "err doing request", statTxt, stat, err
+	if err != nil {
+		return "err doing request", statTxt, stat, err
+	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	return "err reading body", statTxt, stat, err
+	if err != nil {
+		return "err reading body", statTxt, stat, err
+	}
 
 
 	return string(body), statTxt, stat, nil

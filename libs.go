@@ -17,6 +17,10 @@ func (w Writer) l(a ...interface{}) {
 	fmt.Println(a...)
 }
 
+func (w Writer) i(a ...interface{}) {
+	fmt.Print(a...)
+}
+
 func (w Writer) f(str string, a ...interface{}) {
 	fmt.Printf(str, a...)
 }
@@ -45,7 +49,7 @@ func (w Writer) errl(a ...interface{}) {
 	fmt.Fprintln(os.Stderr, a...)
 }
 
-func help() {
+func (w Writer) help() {
 	for i := 0; i < len(helpStr); i++ {
 		wr.l(helpStr[i])
 	}

@@ -15,9 +15,10 @@ type (
 
 var (
 	args = os.Args[1:]
-	silent = false
+	silent bool
 	url string
 	invalidArg InvalidArg
+	help bool
 
 	helpStr = []string{
 		"\033[38mGOw\033[0m --> \033[33mhelp\033[0m",
@@ -40,6 +41,10 @@ func main() {
 				if invalidArg.Exists {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
+				if help {
+					wr.i("\033[0m")
+					wr.help()
+				}
 			default:
 				url = curArg
 			}
@@ -59,10 +64,11 @@ func readArgChars(arg []string) bool {
 		case "s":
 			silent = true
 		case "h":
-			help()
+			help = true
 		default:
 			invalidArg.Value = i
 			invalidArg.Exists = true
+			help = true
 			return strRemaining
 		}
 	}
@@ -78,7 +84,8 @@ func errOut(err error, str any, ext ...interface{}) {
 		pointer += "\033[1;31m^\033[0m"
 		str, ok := str.(string)
 		if !ok {
-			wr.errl("failed to convert str type of any to type of string in errOut()")
+			wr.errl("failed to convert str type of "+
+							"any to type of string in errOut()")
 			os.Exit(1)
 		}
 

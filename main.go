@@ -20,6 +20,7 @@ var (
 	args = os.Args[1:]
 	silent bool
 	secure bool
+	method = "GET"
 	url string
 	invalidArg InvalidArg
 	help bool
@@ -38,7 +39,9 @@ var (
 		"  \033[1;34m-H\033[0m",
 		"    header",
 		"      usage:  \033[1;34m-H \"[key]\" \"[value]\"\033[0m",
-		"      eg:  \033[1;37mgow \033[1;34m-H \"Content-Type\" \"text/json\" \033[1;37mhttps://example.com\033[0m",
+		"      eg:  \033[1;37mgow \033[1;34m-H "+
+						"\"Content-Type\" \"text/json\""+
+						"\033[1;37mhttps://example.com\033[0m",
 	}
 )
 
@@ -46,7 +49,6 @@ func main() {
 	strRemaining := false
 	for i := 0; i < len(args); i++ {
 		curArg := args[i]
-		wr.l(parsedArgs)
 		parsed := slices.Contains(parsedArgs, i)
 		if !strRemaining && !parsed {
 			switch curArg[0] {
@@ -108,6 +110,10 @@ func readArgChars(arg []string, cur int) bool {
 			secure = true
 		case "h":
 			help = true
+		case "p":
+			method = "POST"
+		case "g":
+			method = "GET"
 		case "H":
 			headKeys = append(headKeys, args[cur+1])
 			headVals = append(headVals, args[cur+2])
@@ -123,7 +129,7 @@ func readArgChars(arg []string, cur int) bool {
 }
 
 func mkReq() (string, string, int, error){
-	urlSplit := strings.Split("://", url)
+	urlSplit := strings.Split(url, "://")
 	if len(urlSplit) == 1 {
 		urlSplit = append(urlSplit, url)
 		reqType, ok := op.tern(secure, "https", "http").(string)
@@ -141,7 +147,7 @@ func mkReq() (string, string, int, error){
 		Timeout: time.Second * 10,
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return "err creating request", "", 0, err
 	}

@@ -46,7 +46,8 @@ var (
 )
 
 func main() {
-	strRemaining := false
+	var strRemaining bool
+	var parseHeader bool
 	for i := 0; i < len(args); i++ {
 		curArg := args[i]
 		parsed := slices.Contains(parsedArgs, i)
@@ -54,12 +55,23 @@ func main() {
 			switch curArg[0] {
 			case '-':
 				strSplit := strings.Split(curArg, "")[1:]
-				strRemaining = readArgChars(strSplit, i)
+				strRemaining, parseHeader = readArgChars(strSplit, i)
 				if invalidArg.Exists {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
 				if help {
 					wr.help()
+				}
+				if parseHeader {
+					if i+2 > len(args)-1 {
+						wr.errl("\033[1;31mheader incomplete\033[0m")
+						os.Exit(1)
+					} else {
+						headKeys = append(headKeys, args[i+1])
+						headVals = append(headVals, args[i+2])
+						parsedArgs = append(parsedArgs, i+1, i+2)
+						parseHeader = false
+					}
 				}
 			default:
 				url = curArg
@@ -76,12 +88,12 @@ func main() {
 	}
  
 	if len(args) == 0 {
-		wr.errl("not enough args")
+		wr.errl("\033[1;31mnot enough args\033[0m")
 		os.Exit(1)
 	}
 
 	if url == "" {
-		wr.errl("no url provided")
+		wr.errl("\033[1;31mno url provided\033[0m")
 		os.Exit(1)
 	} 
 
@@ -95,37 +107,53 @@ func main() {
 	wr.l(res)
 }
 
-func readArgChars(arg []string, cur int) bool { 
-	strRemaining := false
-	for i := 0; i < len(arg); i++ {
-		if strRemaining {
-			break
-		}
-		switch (arg[i]) {
-		case "-":
+func readArgChars(arg []string, cur int) (bool, bool) { 
+	var parseForHeader bool
+	var strRemaining bool
+	if arg[0] == "-" {
+		if len(arg) == 1 {
 			strRemaining = true
-		case "s":
-			silent = true
-		case "S":
-			secure = true
-		case "h":
-			help = true
-		case "p":
-			method = "POST"
-		case "g":
-			method = "GET"
-		case "H":
-			headKeys = append(headKeys, args[cur+1])
-			headVals = append(headVals, args[cur+2])
-			parsedArgs = append(parsedArgs, cur, cur+1, cur+2)
-		default:
-			invalidArg.Value = i
-			invalidArg.Exists = true
-			help = true
-			return strRemaining
+		} else {
+			argCut := op.arrToStr(arg[1:])
+			switch argCut {
+			case "PUT":
+				method = argCut
+			default:
+				wr.errl("invalid arg:  \033[1;31m-" +
+						op.arrToStr(arg) + "\033[0m\n")
+				wr.help()
+			}
+		}
+		strRemaining = false
+	} else {
+		for i := 0; i < len(arg); i++ {
+			if strRemaining {
+				break
+			}
+			switch (arg[i]) {
+			case "-":
+				strRemaining = true
+			case "s":
+				silent = true
+			case "S":
+				secure = true
+			case "h":
+				help = true
+			case "p":
+				method = "POST"
+			case "g":
+				method = "GET"
+			case "H":
+				parseForHeader = true
+			default:
+				invalidArg.Value = i+1
+				invalidArg.Exists = true
+				help = true
+				return strRemaining, false
+			}
 		}
 	}
-	return strRemaining
+	return strRemaining, parseForHeader
 }
 
 func mkReq() (string, string, int, error){

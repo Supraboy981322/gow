@@ -103,3 +103,11 @@ func (op Misc) tern(con1 bool, val1 any, val2 any) interface{} {
 		return val2
 	}
 }
+
+func (op Misc) arrToStr(arr []string) string {
+	var str string
+	for _, val := range arr {
+		str = fmt.Sprint(str, val)
+	}
+	return str
+}

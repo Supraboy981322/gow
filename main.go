@@ -53,7 +53,6 @@ func main() {
 			case '-':
 				strSplit := strings.Split(curArg, "")[1:]
 				strRemaining = readArgChars(strSplit, i)
-				strRemaining = false
 				if invalidArg.Exists {
 					errOut(wr.mkerr("arg"), curArg, invalidArg.Value)
 				}
@@ -64,8 +63,14 @@ func main() {
 				url = curArg
 			}
 		} else if !parsed {
-			url += "%20" + curArg
+			url += args[i] + "%20"
 		}
+	}
+
+	//if the args were stringed together
+	//  remove the last %20
+	if strRemaining {
+		url = url[:len(url)-3]
 	}
  
 	if len(args) == 0 {
@@ -97,7 +102,6 @@ func readArgChars(arg []string, cur int) bool {
 		switch (arg[i]) {
 		case "-":
 			strRemaining = true
-			break
 		case "s":
 			silent = true
 		case "S":

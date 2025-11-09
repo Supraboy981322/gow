@@ -1,6 +1,6 @@
 # GOw
 
-A basic http/s client, like cURL
+A basic http/s client, like cURL.
 Why? Because I am bored
 
 ---

@@ -42,6 +42,10 @@ var (
 		"      eg:  \033[1;37mgow \033[1;34m-H "+
 						"\"Content-Type\" \"text/json\""+
 						"\033[1;37mhttps://example.com\033[0m",
+		"  \033[1;36m-p\033[0m",
+		"    POST",
+		"  \033[1;37-g\033[0m",
+		"    GET",
 	}
 )
 
@@ -100,7 +104,7 @@ func main() {
 	res, status, code, err := mkReq()
 	if !silent {
 		wr.l(url)
-		wr.lf("status:  %s / %d", status, code)
+		wr.lf("status:  %s / %d\n", status, code)
 	}
 	er.fan(err, res)
 

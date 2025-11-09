@@ -118,8 +118,8 @@ func (er Eror) okMkErr(ok bool, str string) error {
 }
 
 //ternary-like func
-func (op Misc) tern(con1 bool, val1 any, val2 any) interface{} {
-	if con1 {
+func (op Misc) tern(con bool, val1 any, val2 any) interface{} {
+	if con {
 		return val1
 	} else {
 		return val2

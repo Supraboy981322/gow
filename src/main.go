@@ -2,11 +2,12 @@ package main
 
 import (
 	"os"
+	"io"
 	"time"
-	"io/ioutil"
-	"strings"
 	"slices"
+	"strings"
 	"net/http"
+	"io/ioutil"
 )
 
 type (
@@ -27,6 +28,9 @@ var (
 	headKeys []string
 	headVals []string
 	parsedArgs []int
+	save bool
+	filename string
+	file *os.File
 
 	helpStr = []string{
 		"\033[1;36mGOw\033[0m \033[1m-->\033[0m \033[1;33mhelp\033[0m",
@@ -149,6 +153,8 @@ func readArgChars(arg []string, cur int) (bool, bool) {
 				method = "GET"
 			case "H":
 				parseForHeader = true
+			case "d":
+				save = true
 			default:
 				invalidArg.Value = i+1
 				invalidArg.Exists = true
@@ -175,8 +181,21 @@ func mkReq() (string, string, int, error){
 
 	url = urlSplit[0] + "://" + urlSplit[1]
 
+
 	client := &http.Client{
 		Timeout: time.Second * 10,
+	}
+	
+
+	var err error //getting an odd bug, this fixes it for some reason
+	if save {
+		pathSlice := strings.Split(url, "/")
+		filename = pathSlice[len(pathSlice)-1]
+		file, err = os.Create(filename)
+		if err != nil {
+			return "err creating output file", "", 0, err
+		}
+		defer file.Close()
 	}
 
 	req, err := http.NewRequest(method, url, nil)
@@ -197,12 +216,35 @@ func mkReq() (string, string, int, error){
 	stat := resp.StatusCode
 	statTxt := http.StatusText(stat)
 
-	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		if save {
+			err = os.Remove(filename)
+			if err != nil {
+				return "got bad status code; err deleting file", statTxt, stat, err
+			}
+		}
+		return "", statTxt, stat, nil
+	}
+
+	if save {
+		if !silent {
+			wr.l("saving file")
+		}
+		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return "err writing to file",  statTxt, stat, err
+		}
+		
+		return "", statTxt, stat, nil
+	}
+	
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "err reading body", statTxt, stat, err
 	}
+
+	defer resp.Body.Close()
 
 	return string(body), statTxt, stat, nil
 }

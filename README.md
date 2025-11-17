@@ -18,12 +18,12 @@ TODO
 - [x] print to stdout
 - [x] POST
 - [x] headers
+- [x] save to file
+- [ ] ping
+- [ ] HEAD
+- [ ] Git (potentially)
+- [ ] SSH (no shell, just data transfer)
 - [ ] PUT
 - [ ] PATCH
 - [ ] DELETE
-- [ ] HEAD
 - [ ] TRACE
-- [ ] save to file
-- [ ] ping
-- [ ] Git (potentially)
-- [ ] SSH (no shell, just data transfer)

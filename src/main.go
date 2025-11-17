@@ -216,7 +216,6 @@ func mkReq() (string, string, int, error){
 	stat := resp.StatusCode
 	statTxt := http.StatusText(stat)
 
-
 	if resp.StatusCode != http.StatusOK {
 		if save {
 			err = os.Remove(filename)
